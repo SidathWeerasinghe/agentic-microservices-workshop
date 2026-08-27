@@ -1,0 +1,81 @@
+openapi: 3.0.3
+info:
+  title: Inventory Microservice API
+  description: Handles stock checks and production orders for branches
+  version: 1.0.0
+
+servers:
+  - url: https://inventory-api.example.com/v1
+    description: Production server
+
+paths:
+  /stock:
+    get:
+      summary: Check stock for an item at a branch
+      parameters:
+        - name: itemId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: branchId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Stock details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponse'
+        '404':
+          description: Item or branch not found
+
+  /production-orders:
+    post:
+      summary: Order production for a branch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+      responses:
+        '201':
+          description: Production order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderResponse'
+
+components:
+  schemas:
+    StockResponse:
+      type: object
+      properties:
+        itemId: { type: string }
+        branchId: { type: string }
+        availableQuantity: { type: integer }
+        unitPrice: { type: number, format: double }
+        status:
+          type: string
+          enum: [IN_STOCK, LOW_STOCK, OUT_OF_STOCK]
+      required: [itemId, branchId, availableQuantity, unitPrice, status]
+
+    ProductionOrderRequest:
+      type: object
+      properties:
+        itemId: { type: string }
+        branchId: { type: string }
+        requestedQuantity: { type: integer }
+        reason: { type: string }
+      required: [itemId, branchId, requestedQuantity]
+
+    ProductionOrderResponse:
+      type: object
+      properties:
+        productionOrderId: { type: string }
+        status:
+          type: string
+          enum: [CREATED, IN_PROGRESS, COMPLETED]
+      required: [productionOrderId, status]

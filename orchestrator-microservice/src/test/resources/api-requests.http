@@ -1,0 +1,185 @@
+### Orchestrator Microservice API - Sample Requests
+### Use with VS Code REST Client extension or IntelliJ HTTP Client
+
+### IMPORTANT: Make sure all microservices are running before testing:
+### - Inventory Service: http://localhost:8080
+### - Payment Service: http://localhost:8081
+### - Shipping Service: http://localhost:8082
+### - Orchestrator Service: http://localhost:8083
+
+@baseUrl = http://localhost:8083
+
+### The orchestrator fills unit prices from the stock check, so requests need not
+### send prices. Flow: stock -> (production if low) -> quote -> payment (retry x2) -> confirm.
+
+### ========================================
+### ORDER SCENARIOS
+### ========================================
+
+### SCENARIO 1: Successful order - MacBook Neo x3 from Colombo -> Colombo
+### Grand total ~1,050,675 LKR (below step-up threshold) => COMPLETED
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-001",
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-NEO-001", "quantity": 3 }
+    ],
+    "shippingAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 2: Out of stock - MacBook Air from Colombo (0 units) => INSUFFICIENT_STOCK
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-002",
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-AIR-001", "quantity": 1 }
+    ],
+    "shippingAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 3: MacBook Air from Gampaha (15 units) -> Colombo => COMPLETED
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-003",
+    "branchId": "BRANCH-GAM",
+    "items": [
+        { "itemId": "MACBOOK-AIR-001", "quantity": 1 }
+    ],
+    "shippingAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 4: High-value order with automatic payment retry - MacBook Pro x3
+### Grand total ~1,800,675 LKR (>= step-up threshold). First charge is held for
+### bank authorization; the orchestrator retries automatically => COMPLETED.
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-CORP-01",
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-PRO-001", "quantity": 3 }
+    ],
+    "shippingAddress": {
+        "line1": "88 Reid Avenue",
+        "city": "Colombo",
+        "area": "Colombo 07",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 5: Insufficient stock - MacBook Pro x15 from Colombo (only 10) => INSUFFICIENT_STOCK
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-004",
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-PRO-001", "quantity": 15 }
+    ],
+    "shippingAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 6: International order - MacBook Neo to Dubai (BANK_TRANSFER)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "customerId": "CUST-005",
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-NEO-001", "quantity": 1 }
+    ],
+    "shippingAddress": {
+        "line1": "1 Sheikh Zayed Rd",
+        "city": "Dubai",
+        "area": "Downtown",
+        "country": "UAE"
+    },
+    "paymentDetails": { "paymentMethod": "BANK_TRANSFER", "currency": "LKR" }
+}
+
+###
+
+### SCENARIO 7: Validation error (missing customerId) => 400
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "items": [
+        { "itemId": "MACBOOK-NEO-001", "quantity": 1 }
+    ],
+    "shippingAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "paymentDetails": { "paymentMethod": "CARD", "currency": "LKR" }
+}
+
+### ========================================
+### ACTUATOR ENDPOINTS
+### ========================================
+
+### Health check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+###
+
+### Application info
+GET {{baseUrl}}/actuator/info
+Accept: application/json

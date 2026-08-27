@@ -1,0 +1,104 @@
+{
+	"info": {
+		"_postman_id": "shipping-microservice-collection",
+		"name": "Shipping Microservice API",
+		"description": "Sample requests for the Shipping Microservice. Cost = 100 + 50/kg + 25/item + distance-zone surcharge (origin branch city -> destination city), multiplied by 2.5 for international destinations.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8082" }
+	],
+	"item": [
+		{
+			"name": "Shipping Quotes",
+			"item": [
+				{
+					"name": "Local - iPhone Colombo -> Colombo (625)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-COL\",\n    \"destinationAddress\": {\n        \"line1\": \"12 Marine Drive\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 04\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"items\": [ { \"itemId\": \"IPHONE-15-001\", \"quantity\": 1 } ]\n}" },
+						"url": { "raw": "{{baseUrl}}/quotes", "host": ["{{baseUrl}}"], "path": ["quotes"] },
+						"description": "1 item, same city (surcharge 500): 100 + 25 + 500 = 625 LKR."
+					}
+				},
+				{
+					"name": "Long-haul - iPhone Jaffna -> Colombo (20125)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-JAF\",\n    \"destinationAddress\": {\n        \"line1\": \"12 Marine Drive\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 04\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"items\": [ { \"itemId\": \"IPHONE-15-001\", \"quantity\": 1 } ]\n}" },
+						"url": { "raw": "{{baseUrl}}/quotes", "host": ["{{baseUrl}}"], "path": ["quotes"] },
+						"description": "1 item, ~400 km (surcharge 20000): 100 + 25 + 20000 = 20125 LKR. Landed cost: Jaffna 340,000 + 20,125 = 360,125 vs Colombo 350,000 + 625 = 350,625 -> Colombo cheaper delivered."
+					}
+				},
+				{
+					"name": "Multi-item - 3 MacBook Neo Colombo -> Colombo (675)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-COL\",\n    \"destinationAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"items\": [ { \"itemId\": \"MACBOOK-NEO-001\", \"quantity\": 3 } ]\n}" },
+						"url": { "raw": "{{baseUrl}}/quotes", "host": ["{{baseUrl}}"], "path": ["quotes"] },
+						"description": "3 items, local: 100 + 75 + 500 = 675 LKR."
+					}
+				},
+				{
+					"name": "International - MacBook Neo Colombo -> Dubai (12812.50)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-COL\",\n    \"destinationAddress\": {\n        \"line1\": \"1 Sheikh Zayed Rd\",\n        \"city\": \"Dubai\",\n        \"area\": \"Downtown\",\n        \"country\": \"UAE\"\n    },\n    \"items\": [ { \"itemId\": \"MACBOOK-NEO-001\", \"quantity\": 1 } ]\n}" },
+						"url": { "raw": "{{baseUrl}}/quotes", "host": ["{{baseUrl}}"], "path": ["quotes"] },
+						"description": "Unknown city defaults to 150 km (surcharge 5000), then x2.5: (100 + 25 + 5000) x 2.5 = 12812.50 LKR."
+					}
+				},
+				{
+					"name": "Validation Error - missing branchId (400)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"destinationAddress\": {\n        \"line1\": \"123 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"items\": [ { \"itemId\": \"IPHONE-15-001\", \"quantity\": 1 } ]\n}" },
+						"url": { "raw": "{{baseUrl}}/quotes", "host": ["{{baseUrl}}"], "path": ["quotes"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Shipping Confirmations",
+			"item": [
+				{
+					"name": "Confirm Shipping",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"quoteId\": \"REPLACE-WITH-A-REAL-QUOTE-ID\",\n    \"orderId\": \"ORDER-001\",\n    \"customerId\": \"CUST-001\"\n}" },
+						"url": { "raw": "{{baseUrl}}/confirmations", "host": ["{{baseUrl}}"], "path": ["confirmations"] },
+						"description": "Use a quoteId returned by a quote request. Quotes are single-use and expire after 24 hours."
+					}
+				},
+				{
+					"name": "Confirm Shipping - Invalid Quote (404)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"quoteId\": \"INVALID-QUOTE-ID\",\n    \"orderId\": \"ORDER-002\",\n    \"customerId\": \"CUST-002\"\n}" },
+						"url": { "raw": "{{baseUrl}}/confirmations", "host": ["{{baseUrl}}"], "path": ["confirmations"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Actuator",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] }
+					}
+				}
+			]
+		}
+	]
+}

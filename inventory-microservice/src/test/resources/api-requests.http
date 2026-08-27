@@ -1,0 +1,198 @@
+### Inventory Microservice API - Sample Requests
+### Use with VS Code REST Client extension or IntelliJ HTTP Client
+
+@baseUrl = http://localhost:8080
+
+### ========================================
+### ITEM CATALOG API (Find Item Codes)
+### ========================================
+
+### Get All Items Catalog
+GET {{baseUrl}}/stock/catalog
+Accept: application/json
+
+###
+
+### Search Items by Name - MacBook
+GET {{baseUrl}}/stock/catalog/search?q=macbook
+Accept: application/json
+
+###
+
+### Search Items by Name - Galaxy
+GET {{baseUrl}}/stock/catalog/search?q=galaxy
+Accept: application/json
+
+###
+
+### Search Items by Name - Dell
+GET {{baseUrl}}/stock/catalog/search?q=dell
+Accept: application/json
+
+###
+
+### Search Items by Name - iPhone
+GET {{baseUrl}}/stock/catalog/search?q=iphone
+Accept: application/json
+
+### ========================================
+### STOCK CHECK SCENARIOS
+### ========================================
+
+### MacBook Pro at Colombo - IN_STOCK (10 units @ 600,000)
+GET {{baseUrl}}/stock?itemId=MACBOOK-PRO-001&branchId=BRANCH-COL
+Accept: application/json
+
+###
+
+### MacBook Air at Colombo - OUT_OF_STOCK (0 units)
+GET {{baseUrl}}/stock?itemId=MACBOOK-AIR-001&branchId=BRANCH-COL
+Accept: application/json
+
+###
+
+### MacBook Air at Gampaha - IN_STOCK (15 units @ 450,000)
+GET {{baseUrl}}/stock?itemId=MACBOOK-AIR-001&branchId=BRANCH-GAM
+Accept: application/json
+
+###
+
+### MacBook Neo at Colombo - IN_STOCK (20 units @ 350,000)
+GET {{baseUrl}}/stock?itemId=MACBOOK-NEO-001&branchId=BRANCH-COL
+Accept: application/json
+
+### ========================================
+### MULTI-BRANCH PRICE COMPARISON
+### ========================================
+
+### Galaxy S24 at Colombo (360,000) vs Jaffna (320,000)
+GET {{baseUrl}}/stock?itemId=GALAXY-S24-001&branchId=BRANCH-COL
+Accept: application/json
+
+###
+
+GET {{baseUrl}}/stock?itemId=GALAXY-S24-001&branchId=BRANCH-JAF
+Accept: application/json
+
+###
+
+### Dell XPS at Gampaha (280,000) vs Kandy (310,000)
+GET {{baseUrl}}/stock?itemId=DELL-XPS-001&branchId=BRANCH-GAM
+Accept: application/json
+
+###
+
+GET {{baseUrl}}/stock?itemId=DELL-XPS-001&branchId=BRANCH-KDY
+Accept: application/json
+
+###
+
+### iPhone 15 Pro - landed-cost flip: Jaffna cheaper sticker (340,000), Colombo local (350,000)
+GET {{baseUrl}}/stock?itemId=IPHONE-15-001&branchId=BRANCH-JAF
+Accept: application/json
+
+###
+
+GET {{baseUrl}}/stock?itemId=IPHONE-15-001&branchId=BRANCH-COL
+Accept: application/json
+
+###
+
+### Check stock for non-existent item (should return 404)
+GET {{baseUrl}}/stock?itemId=NO-SUCH-ITEM&branchId=BRANCH-COL
+Accept: application/json
+
+###
+
+### Check stock with missing parameter (should return 400)
+GET {{baseUrl}}/stock?itemId=MACBOOK-PRO-001
+Accept: application/json
+
+### ========================================
+### PRODUCTION ORDER ENDPOINTS
+### ========================================
+
+### Create production order - success (within available stock)
+POST {{baseUrl}}/production-orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "itemId": "MACBOOK-NEO-001",
+    "branchId": "BRANCH-COL",
+    "requestedQuantity": 5,
+    "reason": "Stock replenishment"
+}
+
+###
+
+### Create production order - insufficient stock (409): Colombo has only 10 MacBook Pro
+POST {{baseUrl}}/production-orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "itemId": "MACBOOK-PRO-001",
+    "branchId": "BRANCH-COL",
+    "requestedQuantity": 15,
+    "reason": "Bulk order"
+}
+
+###
+
+### Create production order without reason (reason is optional)
+POST {{baseUrl}}/production-orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "itemId": "MACBOOK-NEO-001",
+    "branchId": "BRANCH-COL",
+    "requestedQuantity": 2
+}
+
+###
+
+### Create production order - missing itemId (should return 400)
+POST {{baseUrl}}/production-orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "requestedQuantity": 5
+}
+
+###
+
+### Create production order - negative quantity (should return 400)
+POST {{baseUrl}}/production-orders
+Content-Type: application/json
+Accept: application/json
+
+{
+    "itemId": "MACBOOK-NEO-001",
+    "branchId": "BRANCH-COL",
+    "requestedQuantity": -10,
+    "reason": "Invalid quantity test"
+}
+
+### ========================================
+### ACTUATOR ENDPOINTS
+### ========================================
+
+### Health check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+###
+
+### Application info
+GET {{baseUrl}}/actuator/info
+Accept: application/json
+
+###
+
+### Metrics
+GET {{baseUrl}}/actuator/metrics
+Accept: application/json

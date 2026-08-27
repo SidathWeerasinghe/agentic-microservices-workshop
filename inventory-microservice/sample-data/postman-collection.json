@@ -1,0 +1,224 @@
+{
+	"info": {
+		"_postman_id": "inventory-microservice-collection",
+		"name": "Inventory Microservice API",
+		"description": "Sample requests for the Inventory Microservice. Sample data spans four Sri Lankan branches: Colombo (BRANCH-COL), Gampaha (BRANCH-GAM), Jaffna (BRANCH-JAF), Kandy (BRANCH-KDY).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080" }
+	],
+	"item": [
+		{
+			"name": "Item Catalog (Find Item Codes)",
+			"description": "Find item codes by product name using natural language search.",
+			"item": [
+				{
+					"name": "Get All Items Catalog",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock/catalog", "host": ["{{baseUrl}}"], "path": ["stock", "catalog"] },
+						"description": "Returns all items across all branches. Use this to find item codes by product name."
+					}
+				},
+				{
+					"name": "Search Items - MacBook",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock/catalog/search?q=macbook", "host": ["{{baseUrl}}"], "path": ["stock", "catalog", "search"], "query": [{ "key": "q", "value": "macbook" }] },
+						"description": "Returns MACBOOK-PRO-001, MACBOOK-AIR-001, MACBOOK-NEO-001."
+					}
+				},
+				{
+					"name": "Search Items - Galaxy",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock/catalog/search?q=galaxy", "host": ["{{baseUrl}}"], "path": ["stock", "catalog", "search"], "query": [{ "key": "q", "value": "galaxy" }] },
+						"description": "Returns GALAXY-S24-001 (Colombo 360,000 and Jaffna 320,000)."
+					}
+				},
+				{
+					"name": "Search Items - Dell",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock/catalog/search?q=dell", "host": ["{{baseUrl}}"], "path": ["stock", "catalog", "search"], "query": [{ "key": "q", "value": "dell" }] },
+						"description": "Returns DELL-XPS-001 (Gampaha 280,000 and Kandy 310,000)."
+					}
+				},
+				{
+					"name": "Search Items - iPhone",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock/catalog/search?q=iphone", "host": ["{{baseUrl}}"], "path": ["stock", "catalog", "search"], "query": [{ "key": "q", "value": "iphone" }] },
+						"description": "Returns IPHONE-15-001 (Jaffna 340,000 and Colombo 350,000)."
+					}
+				}
+			]
+		},
+		{
+			"name": "Stock Check Scenarios",
+			"description": "Check stock for a specific item at a specific branch.",
+			"item": [
+				{
+					"name": "MacBook Pro at Colombo (IN_STOCK)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=MACBOOK-PRO-001&branchId=BRANCH-COL", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "MACBOOK-PRO-001" }, { "key": "branchId", "value": "BRANCH-COL" }] },
+						"description": "MacBook Pro at Colombo. 600,000 LKR. IN_STOCK (10 units)."
+					}
+				},
+				{
+					"name": "MacBook Air at Colombo (OUT_OF_STOCK)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=MACBOOK-AIR-001&branchId=BRANCH-COL", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "MACBOOK-AIR-001" }, { "key": "branchId", "value": "BRANCH-COL" }] },
+						"description": "MacBook Air at Colombo. OUT_OF_STOCK (0 units). Available at Gampaha instead."
+					}
+				},
+				{
+					"name": "MacBook Air at Gampaha (IN_STOCK)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=MACBOOK-AIR-001&branchId=BRANCH-GAM", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "MACBOOK-AIR-001" }, { "key": "branchId", "value": "BRANCH-GAM" }] },
+						"description": "MacBook Air at Gampaha. 450,000 LKR. IN_STOCK (15 units)."
+					}
+				},
+				{
+					"name": "MacBook Neo at Colombo (IN_STOCK)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=MACBOOK-NEO-001&branchId=BRANCH-COL", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "MACBOOK-NEO-001" }, { "key": "branchId", "value": "BRANCH-COL" }] },
+						"description": "MacBook Neo at Colombo. 350,000 LKR. IN_STOCK (20 units)."
+					}
+				}
+			]
+		},
+		{
+			"name": "Multi-Branch Price Comparison",
+			"description": "Same product at different branches. The best deal depends on the delivered (landed) cost - get a shipping quote per branch from the Shipping microservice and add it to the sticker price.",
+			"item": [
+				{
+					"name": "Galaxy S24 at Colombo (360,000)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=GALAXY-S24-001&branchId=BRANCH-COL", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "GALAXY-S24-001" }, { "key": "branchId", "value": "BRANCH-COL" }] },
+						"description": "Galaxy S24 at Colombo. Sticker 360,000 LKR; local shipping is cheap."
+					}
+				},
+				{
+					"name": "Galaxy S24 at Jaffna (320,000)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=GALAXY-S24-001&branchId=BRANCH-JAF", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "GALAXY-S24-001" }, { "key": "branchId", "value": "BRANCH-JAF" }] },
+						"description": "Galaxy S24 at Jaffna. Sticker 320,000 LKR (cheaper) but Jaffna is far, so shipping is higher."
+					}
+				},
+				{
+					"name": "Dell XPS at Gampaha (280,000)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=DELL-XPS-001&branchId=BRANCH-GAM", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "DELL-XPS-001" }, { "key": "branchId", "value": "BRANCH-GAM" }] },
+						"description": "Dell XPS at Gampaha. Sticker 280,000 LKR (cheaper)."
+					}
+				},
+				{
+					"name": "Dell XPS at Kandy (310,000)",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=DELL-XPS-001&branchId=BRANCH-KDY", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "DELL-XPS-001" }, { "key": "branchId", "value": "BRANCH-KDY" }] },
+						"description": "Dell XPS at Kandy. Sticker 310,000 LKR (pricier)."
+					}
+				},
+				{
+					"name": "iPhone 15 Pro at Jaffna (340,000) - landed-cost flip",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=IPHONE-15-001&branchId=BRANCH-JAF", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "IPHONE-15-001" }, { "key": "branchId", "value": "BRANCH-JAF" }] },
+						"description": "iPhone at Jaffna. Cheaper sticker (340,000) but far from Colombo (+20,125 shipping) => 360,125 delivered."
+					}
+				},
+				{
+					"name": "iPhone 15 Pro at Colombo (350,000) - landed-cost flip",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": { "raw": "{{baseUrl}}/stock?itemId=IPHONE-15-001&branchId=BRANCH-COL", "host": ["{{baseUrl}}"], "path": ["stock"], "query": [{ "key": "itemId", "value": "IPHONE-15-001" }, { "key": "branchId", "value": "BRANCH-COL" }] },
+						"description": "iPhone at Colombo. Pricier sticker (350,000) but local (+625 shipping) => 350,625 delivered. WINS despite the higher sticker."
+					}
+				}
+			]
+		},
+		{
+			"name": "Production Orders",
+			"item": [
+				{
+					"name": "Create Production Order - Success",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"itemId\": \"MACBOOK-NEO-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 5,\n    \"reason\": \"Stock replenishment\"\n}" },
+						"url": { "raw": "{{baseUrl}}/production-orders", "host": ["{{baseUrl}}"], "path": ["production-orders"] },
+						"description": "Within available stock (Colombo has 20 MacBook Neo). Returns 201 CREATED and reduces stock."
+					}
+				},
+				{
+					"name": "Create Production Order - Insufficient Stock (409)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"itemId\": \"MACBOOK-PRO-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 15,\n    \"reason\": \"Bulk order\"\n}" },
+						"url": { "raw": "{{baseUrl}}/production-orders", "host": ["{{baseUrl}}"], "path": ["production-orders"] },
+						"description": "Colombo has only 10 MacBook Pro; requesting 15 returns 409 Insufficient Stock."
+					}
+				},
+				{
+					"name": "Create Production Order - Without Reason",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"itemId\": \"MACBOOK-NEO-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 2\n}" },
+						"url": { "raw": "{{baseUrl}}/production-orders", "host": ["{{baseUrl}}"], "path": ["production-orders"] },
+						"description": "reason is optional."
+					}
+				},
+				{
+					"name": "Create Production Order - Validation Error (400)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 5\n}" },
+						"url": { "raw": "{{baseUrl}}/production-orders", "host": ["{{baseUrl}}"], "path": ["production-orders"] },
+						"description": "Missing required itemId. Returns 400 Validation Failed."
+					}
+				}
+			]
+		},
+		{
+			"name": "Actuator",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] }
+					}
+				}
+			]
+		}
+	]
+}

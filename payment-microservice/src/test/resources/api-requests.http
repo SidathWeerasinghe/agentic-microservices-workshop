@@ -1,0 +1,184 @@
+### Payment Microservice API - Sample Requests
+### Use with VS Code REST Client extension or IntelliJ HTTP Client
+
+@baseUrl = http://localhost:8081
+
+### ========================================
+### PAYMENT ENDPOINTS
+### ========================================
+
+### Make a payment with CARD (Success scenario)
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-001",
+    "amount": 350625.00,
+    "currency": "LKR",
+    "paymentMethod": "CARD",
+    "customerId": "CUST-001"
+}
+
+###
+
+### High-value payment - step-up authorization hold (>= 1,500,000 LKR)
+### First attempt returns status FAILED with a "Bank authorization hold" reason.
+### Retry the returned paymentReference and it clears to SUCCESS.
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-BULK-001",
+    "amount": 1800675.00,
+    "currency": "LKR",
+    "paymentMethod": "CARD",
+    "customerId": "CUST-CORP-01"
+}
+
+###
+
+### Make a payment with CASH
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-002",
+    "amount": 2500.50,
+    "currency": "LKR",
+    "paymentMethod": "CASH",
+    "customerId": "CUST-002"
+}
+
+###
+
+### Make a payment with BANK_TRANSFER
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-003",
+    "amount": 10000.00,
+    "currency": "LKR",
+    "paymentMethod": "BANK_TRANSFER",
+    "customerId": "CUST-003"
+}
+
+###
+
+### Make a payment without customerId (optional field)
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-004",
+    "amount": 500.00,
+    "currency": "USD",
+    "paymentMethod": "CARD"
+}
+
+###
+
+### Make a payment - Missing orderId (should return 400)
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "amount": 1500.00,
+    "currency": "LKR",
+    "paymentMethod": "CARD"
+}
+
+###
+
+### Make a payment - Negative amount (should return 400)
+POST {{baseUrl}}/payments
+Content-Type: application/json
+Accept: application/json
+
+{
+    "orderId": "ORDER-005",
+    "amount": -100.00,
+    "currency": "LKR",
+    "paymentMethod": "CARD"
+}
+
+### ========================================
+### RETRY PAYMENT ENDPOINTS
+### ========================================
+
+### Retry payment with different payment method
+### NOTE: Replace PAY-XXXXXXXX with actual payment reference from previous request
+POST {{baseUrl}}/payments/PAY-XXXXXXXX/retry
+Content-Type: application/json
+Accept: application/json
+
+{
+    "paymentMethod": "BANK_TRANSFER",
+    "reason": "Card declined, trying bank transfer"
+}
+
+###
+
+### Retry payment without changing method
+### NOTE: Replace PAY-XXXXXXXX with actual payment reference
+POST {{baseUrl}}/payments/PAY-XXXXXXXX/retry
+Content-Type: application/json
+Accept: application/json
+
+{
+    "reason": "Retry after fixing card details"
+}
+
+###
+
+### Retry payment with empty body (just retry with same settings)
+### NOTE: Replace PAY-XXXXXXXX with actual payment reference
+POST {{baseUrl}}/payments/PAY-XXXXXXXX/retry
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+###
+
+### Retry non-existent payment (should return 404)
+POST {{baseUrl}}/payments/PAY-INVALID123/retry
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+### ========================================
+### GET PAYMENT DETAILS
+### ========================================
+
+### Get payment by reference
+### NOTE: Replace PAY-XXXXXXXX with actual payment reference
+GET {{baseUrl}}/payments/PAY-XXXXXXXX
+Accept: application/json
+
+###
+
+### Get non-existent payment (should return 404)
+GET {{baseUrl}}/payments/PAY-INVALID123
+Accept: application/json
+
+### ========================================
+### ACTUATOR ENDPOINTS
+### ========================================
+
+### Health check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+###
+
+### Application info
+GET {{baseUrl}}/actuator/info
+Accept: application/json

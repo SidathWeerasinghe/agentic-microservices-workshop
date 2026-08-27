@@ -1,0 +1,182 @@
+### Shipping Microservice API - Sample Requests
+### Use with VS Code REST Client extension or IntelliJ HTTP Client
+
+@baseUrl = http://localhost:8082
+
+### ========================================
+### SHIPPING QUOTE SCENARIOS
+### cost = 100 + 50/kg + 25/item + distance-zone surcharge (x2.5 international)
+### ========================================
+
+### Local delivery - iPhone from Colombo to Colombo => 625 LKR
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "destinationAddress": {
+        "line1": "12 Marine Drive",
+        "city": "Colombo",
+        "area": "Colombo 04",
+        "country": "Sri Lanka"
+    },
+    "items": [
+        { "itemId": "IPHONE-15-001", "quantity": 1 }
+    ]
+}
+
+###
+
+### Long-haul - iPhone from Jaffna to Colombo (~400 km) => 20125 LKR
+### The "landed-cost flip": cheaper sticker at Jaffna, but this shipping reverses it.
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-JAF",
+    "destinationAddress": {
+        "line1": "12 Marine Drive",
+        "city": "Colombo",
+        "area": "Colombo 04",
+        "country": "Sri Lanka"
+    },
+    "items": [
+        { "itemId": "IPHONE-15-001", "quantity": 1 }
+    ]
+}
+
+###
+
+### Multi-item - 3 MacBook Neo from Colombo to Colombo => 675 LKR
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "destinationAddress": {
+        "line1": "42 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "items": [
+        { "itemId": "MACBOOK-NEO-001", "quantity": 3 }
+    ]
+}
+
+###
+
+### With weight - MacBook Pro from Colombo to Kandy (~115 km, 2.1 kg)
+### 100 + (2.1 x 50) + 25 + 5000 = 5230 LKR
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "destinationAddress": {
+        "line1": "789 Peradeniya Road",
+        "city": "Kandy",
+        "area": "Kandy Central",
+        "country": "Sri Lanka"
+    },
+    "items": [
+        { "itemId": "MACBOOK-PRO-001", "quantity": 1, "weightKg": 2.1 }
+    ]
+}
+
+###
+
+### International - MacBook Neo from Colombo to Dubai => 12812.50 LKR (x2.5)
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "branchId": "BRANCH-COL",
+    "destinationAddress": {
+        "line1": "1 Sheikh Zayed Rd",
+        "city": "Dubai",
+        "area": "Downtown",
+        "country": "UAE"
+    },
+    "items": [
+        { "itemId": "MACBOOK-NEO-001", "quantity": 1 }
+    ]
+}
+
+###
+
+### Validation error - missing branchId (should return 400)
+POST {{baseUrl}}/quotes
+Content-Type: application/json
+Accept: application/json
+
+{
+    "destinationAddress": {
+        "line1": "123 Galle Road",
+        "city": "Colombo",
+        "area": "Colombo 03",
+        "country": "Sri Lanka"
+    },
+    "items": [
+        { "itemId": "IPHONE-15-001", "quantity": 1 }
+    ]
+}
+
+### ========================================
+### SHIPPING CONFIRMATION ENDPOINTS
+### ========================================
+
+### Confirm shipping (replace with a real quoteId from a quote above)
+POST {{baseUrl}}/confirmations
+Content-Type: application/json
+Accept: application/json
+
+{
+    "quoteId": "REPLACE-WITH-ACTUAL-QUOTE-ID",
+    "orderId": "ORDER-001",
+    "customerId": "CUST-001"
+}
+
+###
+
+### Confirm shipping - Invalid quote (should return 404)
+POST {{baseUrl}}/confirmations
+Content-Type: application/json
+Accept: application/json
+
+{
+    "quoteId": "INVALID-QUOTE-ID",
+    "orderId": "ORDER-002",
+    "customerId": "CUST-002"
+}
+
+###
+
+### Confirm shipping - Validation error (missing orderId, should return 400)
+POST {{baseUrl}}/confirmations
+Content-Type: application/json
+Accept: application/json
+
+{
+    "quoteId": "QUOTE-12345",
+    "customerId": "CUST-001"
+}
+
+### ========================================
+### ACTUATOR ENDPOINTS
+### ========================================
+
+### Health check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+###
+
+### Application info
+GET {{baseUrl}}/actuator/info
+Accept: application/json

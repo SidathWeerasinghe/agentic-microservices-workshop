@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Payment Microservice API
+  description: Handles payments and retries
+  version: 1.0.0
+
+servers:
+  - url: https://payment-api.example.com/v1
+    description: Production server
+
+paths:
+  /payments:
+    post:
+      summary: Make a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'  # Now resolvable
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+
+  /payments/{paymentReference}/retry:
+    post:
+      summary: Retry payment
+      parameters:
+        - name: paymentReference
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRetryRequest'
+      responses:
+        '200':
+          description: Payment retried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+
+components:
+  schemas:
+    PaymentRequest:
+      type: object
+      properties:
+        orderId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          example: LKR
+        paymentMethod:
+          type: string
+          enum: [CARD, CASH, BANK_TRANSFER]
+        customerId:
+          type: string
+      required: [orderId, amount, currency, paymentMethod]
+
+    PaymentRetryRequest:
+      type: object
+      properties:
+        paymentMethod:
+          type: string
+          enum: [CARD, CASH, BANK_TRANSFER]
+        reason:
+          type: string
+      required: []
+
+    PaymentResponse:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        paymentReference:
+          type: string
+        orderId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED]
+        amount:
+          type: number
+        failureReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [paymentId, paymentReference, orderId, status, amount]

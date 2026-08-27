@@ -1,0 +1,100 @@
+{
+	"info": {
+		"_postman_id": "orchestrator-microservice-collection",
+		"name": "Orchestrator Microservice API",
+		"description": "Sample requests for the Orchestrator. It runs the full order flow (stock -> production if low -> quote -> payment with auto-retry x2 -> confirm) across the Inventory (8080), Payment (8081) and Shipping (8082) services. Unit prices are filled from the stock check.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8083" }
+	],
+	"item": [
+		{
+			"name": "Order Scenarios",
+			"item": [
+				{
+					"name": "Success - MacBook Neo x3 (Colombo -> Colombo)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-NEO-001\", \"quantity\": 3 } ],\n    \"shippingAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "Grand total ~1,050,675 LKR (below step-up threshold). Completes on the first payment attempt."
+					}
+				},
+				{
+					"name": "Out of Stock - MacBook Air at Colombo",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-002\",\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-AIR-001\", \"quantity\": 1 } ],\n    \"shippingAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "MacBook Air is out of stock at Colombo (0 units). Returns status INSUFFICIENT_STOCK at the stock step."
+					}
+				},
+				{
+					"name": "Success - MacBook Air from Gampaha",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-003\",\n    \"branchId\": \"BRANCH-GAM\",\n    \"items\": [ { \"itemId\": \"MACBOOK-AIR-001\", \"quantity\": 1 } ],\n    \"shippingAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "The same MacBook Air is available at Gampaha (15 units)."
+					}
+				},
+				{
+					"name": "High-value + auto-retry - MacBook Pro x3",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-CORP-01\",\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-PRO-001\", \"quantity\": 3 } ],\n    \"shippingAddress\": {\n        \"line1\": \"88 Reid Avenue\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 07\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "Grand total ~1,800,675 LKR (>= step-up threshold). The first charge is held; the orchestrator retries automatically and the order completes."
+					}
+				},
+				{
+					"name": "Insufficient Stock - MacBook Pro x15",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-004\",\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-PRO-001\", \"quantity\": 15 } ],\n    \"shippingAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "Colombo holds only 10 MacBook Pro; requesting 15 returns INSUFFICIENT_STOCK."
+					}
+				},
+				{
+					"name": "International - MacBook Neo to Dubai",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"customerId\": \"CUST-005\",\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-NEO-001\", \"quantity\": 1 } ],\n    \"shippingAddress\": {\n        \"line1\": \"1 Sheikh Zayed Rd\",\n        \"city\": \"Dubai\",\n        \"area\": \"Downtown\",\n        \"country\": \"UAE\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"BANK_TRANSFER\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+						"description": "International destination applies the x2.5 shipping multiplier."
+					}
+				},
+				{
+					"name": "Validation Error - missing customerId (400)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"branchId\": \"BRANCH-COL\",\n    \"items\": [ { \"itemId\": \"MACBOOK-NEO-001\", \"quantity\": 1 } ],\n    \"shippingAddress\": {\n        \"line1\": \"42 Galle Road\",\n        \"city\": \"Colombo\",\n        \"area\": \"Colombo 03\",\n        \"country\": \"Sri Lanka\"\n    },\n    \"paymentDetails\": { \"paymentMethod\": \"CARD\", \"currency\": \"LKR\" }\n}" },
+						"url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Actuator",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] }
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: Shipping Microservice API
+  description: Handles shipping cost calculations and confirmations
+  version: 1.0.0
+
+servers:
+  - url: https://shipping-api.example.com/v1
+    description: Production server
+
+components:
+  schemas:
+    Address:
+      type: object
+      properties:
+        line1: { type: string }
+        city: { type: string }
+        area: { type: string }
+        postalCode: { type: string }
+        country: { type: string }
+      required: [line1, city, area, country]
+
+    ShippingItem:
+      type: object
+      properties:
+        itemId: { type: string }
+        quantity: { type: integer }
+        weightKg: { type: number }
+      required: [itemId, quantity]
+
+paths:
+  /quotes:
+    post:
+      summary: Calculate shipping cost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branchId: { type: string }
+                destinationAddress: { $ref: '#/components/schemas/Address' }
+                items:
+                  type: array
+                  items: { $ref: '#/components/schemas/ShippingItem' }
+              required: [branchId, destinationAddress, items]
+      responses:
+        '200':
+          description: Shipping quote
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quoteId: { type: string }
+                  shippingCost: { type: number }
+                  currency: { type: string, example: LKR }
+                required: [quoteId, shippingCost]
+
+  /confirmations:
+    post:
+      summary: Confirm shipping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quoteId: { type: string }
+                orderId: { type: string }
+                customerId: { type: string }
+              required: [quoteId, orderId, customerId]
+      responses:
+        '201':
+          description: Shipping confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shipmentId: { type: string }
+                  status: { type: string, enum: [CONFIRMED] }
+                required: [shipmentId, status]
