@@ -3,7 +3,7 @@
 
 > **IEEE Conference Workshop · Lab Companion**
 > Exercise the same business scenarios **two ways** — through the REST orchestrator
-> (`master` branch, Postman) and through the MCP agent (`mcp` branch, chat) — confirm they
+> (`main` branch, Postman) and through the MCP agent (`agentic` branch, chat) — confirm they
 > reach identical outcomes, then see where the agent goes further.
 
 ---
@@ -15,8 +15,8 @@ database resets on restart, and write scenarios reduce stock).
 
 | Lane | Branch | How to drive it |
 |---|---|---|
-| **REST** | `master` | Start inventory `:8080`, payment `:8081`, shipping `:8082`, orchestrator `:8083`. Import each `sample-data/postman-collection.json`. |
-| **MCP** | `mcp` | Start inventory `:8080`, payment `:8081`, shipping `:8082`. In n8n, attach the three `/mcp` endpoints (HTTP Streamable) to your AI Agent, then chat. |
+| **REST** | `main` (or `agentic`) | Start inventory `:8080`, payment `:8081`, shipping `:8082`, orchestrator `:8083`. Import each `sample-data/postman-collection.json`. |
+| **MCP** | `agentic` | Start inventory `:8080`, payment `:8081`, shipping `:8082`. Start n8n (`n8n/docker-compose.yml`), import `n8n/agentic-commerce-workflow.json`, set your LLM credential, then chat. |
 
 **Reading a test case.** Each case has a **REST lane** (Postman requests to run) and an
 **MCP lane** (a prompt to paste). The **Expected** line is the outcome you should see in
@@ -164,7 +164,7 @@ REST returns raw JSON to interpret; the agent answers in plain language.
 For each test case, note not just the result but the **effort** and **failure behaviour**
 of each surface — that contrast is the workshop's takeaway.
 
-| Dimension | REST orchestrator (`master`) | MCP agent (`mcp`) |
+| Dimension | REST orchestrator (`main`) | MCP agent (`agentic`) |
 |---|---|---|
 | Who plans the steps | hard-coded Java | the model, at runtime |
 | Passing IDs between calls | manual field mapping | automatic |
@@ -172,8 +172,8 @@ of each surface — that contrast is the workshop's takeaway.
 | Branch comparison (TC-04) | not supported | native |
 | New request shape | new workflow | no change |
 
-> **Reset between runs.** Write scenarios (TC-01, TC-02) reduce branch stock and consume
-> single-use quotes. Restart the services before re-running so the numbers match this sheet.
+> **Reset between runs.** Write scenarios (TC-01, TC-02, TC-04) allocate branch stock through
+> production orders and consume single-use quotes. Restart the services before re-running so the numbers match this sheet.
 
 > **Discussion prompt for the room.** TC-01→03 prove parity — so why choose MCP? TC-04
 > answers it: the same tools, with a reasoning layer on top, solve problems no one

@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -40,6 +42,25 @@ public class PaymentService {
     public PaymentResponse makePayment(PaymentRequest request) {
         log.info("Processing payment for orderId: {}, amount: {} {}", 
                 request.getOrderId(), request.getAmount(), request.getCurrency());
+
+        // Idempotency guard: one payment per order. A caller (or an AI agent) that calls
+        // makePayment twice for the same order must never charge the customer twice.
+        List<Payment> existing = paymentRepository.findByOrderId(request.getOrderId());
+        Optional<Payment> alreadyPaid = existing.stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .findFirst();
+        if (alreadyPaid.isPresent()) {
+            log.warn("Order {} is already paid ({}); returning the existing payment",
+                    request.getOrderId(), alreadyPaid.get().getPaymentReference());
+            return mapToResponse(alreadyPaid.get());
+        }
+        if (!existing.isEmpty()) {
+            Payment previous = existing.get(existing.size() - 1);
+            throw new PaymentProcessingException(String.format(
+                    "Order %s already has an unsuccessful payment (reference %s). "
+                            + "Use retryPayment with that reference instead of creating a new payment.",
+                    request.getOrderId(), previous.getPaymentReference()));
+        }
 
         Payment payment = Payment.builder()
                 .orderId(request.getOrderId())

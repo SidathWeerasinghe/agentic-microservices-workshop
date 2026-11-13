@@ -160,7 +160,7 @@ curl -X POST "http://localhost:8080/production-orders" \
     "itemId": "MACBOOK-NEO-001",
     "branchId": "BRANCH-COL",
     "requestedQuantity": 5,
-    "reason": "Stock replenishment"
+    "reason": "Order ORD-1001 - allocate stock"
   }'
 ```
 ```json
@@ -223,7 +223,7 @@ $body = @{
     itemId = "MACBOOK-NEO-001"
     branchId = "BRANCH-COL"
     requestedQuantity = 5
-    reason = "Stock replenishment"
+    reason = "Order ORD-1001 - allocate stock"
 } | ConvertTo-Json
 
 Invoke-RestMethod -Uri "http://localhost:8080/production-orders" -Method Post -Body $body -ContentType "application/json"

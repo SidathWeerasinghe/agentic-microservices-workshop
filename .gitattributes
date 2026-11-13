@@ -1,0 +1,8 @@
+# Keep LF in the repository; Git converts to the platform's line ending on checkout.
+# Stops Windows checkouts from showing every file as modified.
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.sh  text eol=lf
+*.jar binary
+*.png binary

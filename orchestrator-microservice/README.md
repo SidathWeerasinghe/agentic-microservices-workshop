@@ -32,7 +32,7 @@ A Spring Boot microservice that orchestrates the complete order flow across Inve
 1. Check Stock (Inventory)
         │
         ▼
-2. Create Production Order (if low stock)
+2. Create Production Order per item (allocates the ordered quantity from branch stock)
         │
         ▼
 3. Calculate Shipping Quote (Shipping)

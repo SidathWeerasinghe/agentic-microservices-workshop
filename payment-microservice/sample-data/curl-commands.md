@@ -89,6 +89,18 @@ curl -X POST "http://localhost:8081/payments/PAY-C554ECC1/retry" \
 
 ---
 
+## One Payment per Order (Idempotency)
+
+`POST /payments` accepts **one payment per `orderId`**:
+
+- If the order is already paid, the existing successful payment is returned (no second charge).
+- If the order has a failed payment, the call is rejected with **422** and the message points
+  to `POST /payments/{paymentReference}/retry`.
+
+This protects customers when a client — or an AI agent — repeats a call.
+
+---
+
 ## Payment Methods
 
 ### CASH

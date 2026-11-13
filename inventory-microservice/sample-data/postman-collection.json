@@ -170,7 +170,7 @@
 					"request": {
 						"method": "POST",
 						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
-						"body": { "mode": "raw", "raw": "{\n    \"itemId\": \"MACBOOK-NEO-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 5,\n    \"reason\": \"Stock replenishment\"\n}" },
+						"body": { "mode": "raw", "raw": "{\n    \"itemId\": \"MACBOOK-NEO-001\",\n    \"branchId\": \"BRANCH-COL\",\n    \"requestedQuantity\": 5,\n    \"reason\": \"Order ORD-1001 - allocate stock\"\n}" },
 						"url": { "raw": "{{baseUrl}}/production-orders", "host": ["{{baseUrl}}"], "path": ["production-orders"] },
 						"description": "Within available stock (Colombo has 20 MacBook Neo). Returns 201 CREATED and reduces stock."
 					}

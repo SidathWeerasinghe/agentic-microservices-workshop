@@ -43,11 +43,9 @@ public class OrderOrchestrationService {
 
             // Reject order if stock is insufficient
             if (!stockResult.isSufficient()) {
-                int totalRequested = request.getItems().stream()
-                        .mapToInt(OrderItem::getQuantity)
-                        .sum();
+                int requested = requestedQuantity(request, stockResult.getItemId());
                 String errorMessage = String.format("Insufficient stock: requested %d but only %d available at branch %s",
-                        totalRequested, stockResult.getAvailableQuantity(), request.getBranchId());
+                        requested, stockResult.getAvailableQuantity(), request.getBranchId());
                 log.warn("Order rejected - {}", errorMessage);
                 throw new OrchestrationException(
                         errorMessage,
@@ -56,15 +54,12 @@ public class OrderOrchestrationService {
                 );
             }
 
-            // Step 2: Create Production Order if stock is low (but still sufficient for this order)
-            if ("LOW_STOCK".equals(stockResult.getStatus())) {
-                log.info("Step 2: Creating production order due to {}", stockResult.getStatus());
-                ProductionOrderResult productionResult = createProductionOrder(request, stockResult);
-                responseBuilder.productionOrderResult(productionResult);
-                log.info("Production order created: {}", productionResult.getProductionOrderId());
-            } else {
-                log.info("Step 2: Skipped - Stock level is adequate");
-            }
+            // Step 2: Create a production order per item - allocates the ordered quantity
+            // from branch stock (inventory deducts it, and rejects it if stock ran out meanwhile)
+            log.info("Step 2: Creating production orders to allocate stock for {} items", request.getItems().size());
+            ProductionOrderResult productionResult = createProductionOrders(orderId, request);
+            responseBuilder.productionOrderResult(productionResult);
+            log.info("Production order(s) created, last: {}", productionResult.getProductionOrderId());
 
             // Step 3: Calculate Shipping Quote
             log.info("Step 3: Calculating shipping quote");
@@ -122,35 +117,53 @@ public class OrderOrchestrationService {
         }
     }
 
+    /**
+     * Checks stock for EVERY item in the order and sets each item's unit price from the
+     * inventory response. Returns the first item that cannot be fulfilled, or the first
+     * item's result when all items are sufficient.
+     */
     private StockCheckResult checkStockForItems(OrderRequest request) {
-        OrderItem firstItem = request.getItems().get(0);
-        StockCheckResult result = inventoryClient.checkStock(firstItem.getItemId(), request.getBranchId());
-        
-        if (result.getUnitPrice() != null) {
-            firstItem.setUnitPrice(result.getUnitPrice());
+        StockCheckResult firstResult = null;
+        for (OrderItem item : request.getItems()) {
+            StockCheckResult result = inventoryClient.checkStock(item.getItemId(), request.getBranchId());
+
+            if (result.getUnitPrice() != null) {
+                item.setUnitPrice(result.getUnitPrice());
+            }
+
+            int available = result.getAvailableQuantity() != null ? result.getAvailableQuantity() : 0;
+            int requested = requestedQuantity(request, item.getItemId());
+            result.setSufficient(available >= requested);
+
+            if (!result.isSufficient()) {
+                return result;
+            }
+            if (firstResult == null) {
+                firstResult = result;
+            }
         }
-        
-        int totalRequested = request.getItems().stream()
-                .mapToInt(OrderItem::getQuantity)
-                .sum();
-        
-        result.setSufficient(result.getAvailableQuantity() >= totalRequested);
-        return result;
+        return firstResult;
     }
 
-    private ProductionOrderResult createProductionOrder(OrderRequest request, StockCheckResult stockResult) {
-        int totalNeeded = request.getItems().stream()
+    /** Total quantity requested for an item (the same item may appear on more than one line). */
+    private int requestedQuantity(OrderRequest request, String itemId) {
+        return request.getItems().stream()
+                .filter(item -> item.getItemId().equals(itemId))
                 .mapToInt(OrderItem::getQuantity)
                 .sum();
-        
-        int shortfall = totalNeeded - stockResult.getAvailableQuantity();
-        
-        return inventoryClient.createProductionOrder(
-                stockResult.getItemId(),
-                request.getBranchId(),
-                Math.max(shortfall, 10),
-                "Order " + request.getCustomerId() + " - Stock replenishment"
-        );
+    }
+
+    private ProductionOrderResult createProductionOrders(String orderId, OrderRequest request) {
+        ProductionOrderResult lastResult = null;
+        for (OrderItem item : request.getItems()) {
+            lastResult = inventoryClient.createProductionOrder(
+                    item.getItemId(),
+                    request.getBranchId(),
+                    item.getQuantity(),
+                    "Order " + orderId + " for customer " + request.getCustomerId()
+            );
+        }
+        return lastResult;
     }
 
     private ShippingQuoteResult calculateShipping(OrderRequest request) {
@@ -193,6 +206,7 @@ public class OrderOrchestrationService {
 
     private String determineFailedStep(OrderResponse response) {
         if (response.getStockCheckResult() == null) return "STOCK_CHECK";
+        if (response.getProductionOrderResult() == null) return "PRODUCTION_ORDER";
         if (response.getShippingQuoteResult() == null) return "SHIPPING_QUOTE";
         if (response.getPaymentResult() == null) return "PAYMENT";
         if (response.getShippingConfirmationResult() == null) return "SHIPPING_CONFIRMATION";

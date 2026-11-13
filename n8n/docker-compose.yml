@@ -1,0 +1,24 @@
+# n8n for the agent lane of the workshop.
+#   docker compose up -d   ->   http://localhost:5678
+# The three Spring Boot services run on the HOST (ports 8080-8082). Inside the container
+# they are reached as host.docker.internal; extra_hosts makes that name work on Linux too
+# (Docker Desktop on Windows/macOS already provides it).
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: workshop-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Colombo
+      - TZ=Asia/Colombo
+      - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
